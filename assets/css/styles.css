@@ -216,6 +216,28 @@ img { max-width: 100%; display: block; }
 .share-url-preview span { display:block; color:var(--muted); font-size:11px; margin-bottom:4px; }
 .share-url-preview code { display:block; overflow-wrap:anywhere; font-size:11px; color:#395148; }
 
+.propagation-card .card-heading { margin-bottom:16px; }
+.propagation-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.propagation-region { min-width:0; padding:16px; border:1px solid var(--line); border-radius:16px; background:#fbfdfc; transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+.propagation-region:hover { transform:translateY(-2px); border-color:#9ccab5; box-shadow:0 10px 28px rgba(18,49,36,.06); }
+.propagation-region.resolved { background:linear-gradient(180deg,#fbfefc,#f1faf6); border-color:#c8e5d6; }
+.propagation-region.empty { background:#fffaf1; border-color:#efdfb5; }
+.propagation-region.error { background:#fff5f5; border-color:#efcaca; }
+.propagation-region-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.propagation-location { display:flex; align-items:center; gap:8px; min-width:0; }
+.propagation-location strong { font-size:14px; }
+.propagation-flag { font-size:19px; line-height:1; }
+.propagation-badge { flex:0 0 auto; padding:4px 8px; border-radius:999px; font-size:10px; font-weight:800; background:#e5f4ec; color:var(--green-dark); }
+.propagation-region.empty .propagation-badge { background:#fff0c9; color:#8b6416; }
+.propagation-region.error .propagation-badge { background:#ffe4e6; color:#a33b44; }
+.propagation-records { display:grid; gap:9px; margin-top:14px; }
+.propagation-row { display:grid; gap:4px; }
+.propagation-row > span { color:#7a8982; font-size:10px; font-weight:700; letter-spacing:.04em; }
+.propagation-row code { display:block; min-width:0; overflow-wrap:anywhere; color:#31483d; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:10px; line-height:1.5; }
+.propagation-ttl { color:#92a097; font-size:9px; }
+.propagation-note { margin:13px 0 0; color:#8a9891; font-size:11px; line-height:1.7; }
+.propagation-empty { grid-column:1/-1; padding:18px; border:1px dashed var(--line); border-radius:14px; color:var(--muted); font-size:13px; text-align:center; }
+
 .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1); }
 .reveal.is-visible { opacity:1; transform:none; }
 .result-section.reveal.is-visible .info-card { animation:cardUp .46s ease both; }
@@ -224,9 +246,75 @@ img { max-width: 100%; display: block; }
 .result-section.reveal.is-visible .info-card:nth-child(4){ animation-delay:.15s; }
 @keyframes cardUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
 
-.pdf-export { width:900px !important; max-width:900px !important; padding:26px !important; background:#fff !important; color:#16251f !important; }
-.pdf-export .result-actions,.pdf-export .raw-details,.pdf-export button { display:none !important; }
-.pdf-export::before { content:"WUMETAX · DOMAIN LOOKUP REPORT"; display:block; margin-bottom:18px; color:#0d8259; font-size:12px; font-weight:800; letter-spacing:.12em; }
+.pdf-report-capture {
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:2147483000;
+  width:794px;
+  min-height:1123px;
+  padding:38px;
+  background:#fff;
+  color:#16251f;
+  font-family:"Noto Sans TC",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.55;
+  pointer-events:none;
+  transform:none !important;
+  opacity:1 !important;
+}
+.pdf-report-capture * { box-sizing:border-box; }
+.pdf-report-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding-bottom:18px; border-bottom:1px solid #dfe9e4; }
+.pdf-brand { display:flex; align-items:center; gap:12px; }
+.pdf-brand img { width:48px; height:48px; object-fit:cover; border-radius:50%; border:1px solid #dbe7e1; }
+.pdf-brand div { display:grid; gap:2px; }
+.pdf-brand strong { font-size:16px; letter-spacing:.08em; }
+.pdf-brand span { color:#798981; font-size:9px; letter-spacing:.16em; }
+.pdf-date { color:#7f8e87; font-size:10px; }
+.pdf-title-block { padding:28px 0 20px; }
+.pdf-title-block > span { color:#0d8259; font-size:10px; font-weight:800; letter-spacing:.14em; }
+.pdf-title-block h1 { margin:6px 0 4px; font-size:32px; line-height:1.2; overflow-wrap:anywhere; }
+.pdf-title-block p { margin:0; color:#687a71; font-size:13px; }
+.pdf-summary-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.pdf-summary { min-height:92px; padding:14px; border:1px solid #dfe9e4; border-radius:14px; background:#f8fbf9; }
+.pdf-summary span { display:block; color:#76877f; font-size:10px; margin-bottom:8px; }
+.pdf-summary strong { display:block; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+.pdf-block { margin-top:14px; padding:16px; border:1px solid #dfe9e4; border-radius:15px; background:#fff; break-inside:avoid; page-break-inside:avoid; }
+.pdf-block h2 { margin:0 0 10px; font-size:15px; }
+.pdf-helper { margin:-4px 0 12px; color:#7d8d85; font-size:9px; }
+.pdf-list { display:grid; gap:6px; }
+.pdf-value { padding:7px 9px; border-radius:9px; background:#f5f9f7; color:#32473e; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:9px; overflow-wrap:anywhere; }
+.pdf-value.muted { color:#8a9891; font-family:inherit; }
+.pdf-dns-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.pdf-dns-grid > div { min-width:0; }
+.pdf-dns-grid b { display:block; margin-bottom:5px; color:#0d8259; font-size:10px; }
+.pdf-region-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.pdf-region-card { padding:12px; border:1px solid #dfe9e4; border-radius:12px; background:#f9fcfa; break-inside:avoid; page-break-inside:avoid; }
+.pdf-region-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.pdf-region-head strong { font-size:11px; }
+.pdf-region-head span { padding:3px 6px; border-radius:999px; background:#e7f5ee; color:#0b6d4c; font-size:8px; font-weight:800; }
+.pdf-region-line { display:grid; gap:3px; margin-top:6px; }
+.pdf-region-line b { color:#7a8982; font-size:8px; }
+.pdf-region-line code { color:#33483f; font-size:8px; overflow-wrap:anywhere; }
+.pdf-report-footer { margin-top:16px; padding-top:14px; border-top:1px solid #dfe9e4; }
+.pdf-report-footer > span { display:block; color:#7b8b83; font-size:9px; }
+.pdf-report-footer code { display:block; margin-top:4px; color:#30463c; font-size:8px; overflow-wrap:anywhere; }
+.pdf-report-footer p { margin:9px 0 0; color:#8a9891; font-size:8px; line-height:1.6; }
+
+.pdf-generating-mask {
+  position:fixed;
+  inset:0;
+  z-index:2147483647;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:10px;
+  background:rgba(244,248,246,.94);
+  backdrop-filter:blur(10px);
+  color:#183229;
+}
+.pdf-generating-mask strong { font-size:16px; }
+.pdf-generating-mask small { color:#75877e; font-size:12px; }
+.pdf-mask-spinner { width:34px; height:34px; border-radius:50%; border:3px solid #d5e8df; border-top-color:#0d8259; animation:spin .8s linear infinite; }
 
 @media (max-width: 960px) {
   .shell { width:min(100% - 32px,1160px); }
@@ -234,6 +322,7 @@ img { max-width: 100%; display: block; }
   .info-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .detail-grid { grid-template-columns:1fr; }
   .notice-grid { grid-template-columns:1fr 1fr; }
+  .propagation-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .notice-card:last-child { grid-column:1/-1; }
 }
 
@@ -265,6 +354,7 @@ img { max-width: 100%; display: block; }
   .info-card { min-height:124px; padding:16px; }
   .detail-card { padding:18px; }
   .dns-group { grid-template-columns:58px minmax(0,1fr); }
+  .propagation-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .notice-grid { grid-template-columns:1fr; padding-bottom:56px; }
   .notice-card:last-child { grid-column:auto; }
   .notice-card { min-height:auto; padding:22px; }
@@ -291,6 +381,7 @@ img { max-width: 100%; display: block; }
   .card-heading { align-items:flex-start; }
   .dns-group { grid-template-columns:1fr; gap:7px; }
   .dns-type { justify-self:start; }
+  .propagation-grid { grid-template-columns:1fr; }
   .history-section { padding-top:46px; }
   .section-title-row { align-items:flex-start; }
   .history-item { width:100%; text-align:left; }
