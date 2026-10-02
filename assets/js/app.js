@@ -14,10 +14,6 @@
   const registeredContent = $('#registeredContent');
   const historyList = $('#historyList');
   const historyEmpty = $('#historyEmpty');
-  const shareDialog = $('#shareDialog');
-  const shareUrlPreview = $('#shareUrlPreview');
-  const downloadPdfButton = $('#downloadPdf');
-  const shareUrlButton = $('#shareUrl');
 
   let currentResult = null;
   let toastTimer = null;
@@ -61,15 +57,6 @@
 
   function escapeForCopy(value) {
     return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 
   async function copyText(text, label = '已複製') {
@@ -394,170 +381,9 @@
       historyList.appendChild(button);
     });
   }
-
-  function openShareDialog() {
-    if (!currentResult?.domain) return;
-    shareUrlPreview.textContent = getResultUrl();
-    if (typeof shareDialog.showModal === 'function') shareDialog.showModal();
-    else copyText(getResultUrl(), '查詢網址已複製');
-  }
-
-  async function shareResultUrl() {
+  async function copyResultUrl() {
     if (!currentResult?.domain) return;
     await copyText(getResultUrl(), '查詢網址已複製');
-    if (shareDialog?.open) shareDialog.close();
-  }
-
-  function createPdfReport() {
-    const data = currentResult || {};
-    const dns = data.dns || {};
-    const propagation = Array.isArray(data.propagation) ? data.propagation : [];
-    const ns = Array.isArray(data.nameservers) ? data.nameservers : [];
-
-    const list = (items, empty = '未提供') => {
-      const values = Array.isArray(items) ? items.filter(Boolean) : [];
-      return values.length
-        ? values.map((value) => `<div class="pdf-value">${escapeHtml(value)}</div>`).join('')
-        : `<div class="pdf-value muted">${escapeHtml(empty)}</div>`;
-    };
-
-    const propagationHtml = propagation.length
-      ? propagation.map((item) => {
-          const addresses = [...(item.a || []), ...(item.cname || [])];
-          const status = item.status === 'resolved' ? '已解析' : item.status === 'empty' ? '查無記錄' : '查詢失敗';
-          return `
-            <article class="pdf-region-card">
-              <div class="pdf-region-head">
-                <strong>${escapeHtml(item.flag || '🌐')} ${escapeHtml(item.name || item.code || '區域')}</strong>
-                <span>${escapeHtml(status)}</span>
-              </div>
-              <div class="pdf-region-line"><b>A / CNAME</b><code>${escapeHtml(addresses.slice(0, 3).join(' · ') || '—')}</code></div>
-              <div class="pdf-region-line"><b>NS</b><code>${escapeHtml((item.ns || []).slice(0, 2).join(' · ') || '—')}</code></div>
-            </article>`;
-        }).join('')
-      : '<div class="pdf-value muted">目前沒有區域解析資料</div>';
-
-    const report = document.createElement('section');
-    report.className = 'pdf-report-capture';
-    report.setAttribute('aria-hidden', 'true');
-    report.innerHTML = `
-      <header class="pdf-report-header">
-        <div class="pdf-brand">
-          <img src="/assets/images/wumetax-logo.webp" alt="" />
-          <div><strong>WUMETAX</strong><span>DOMAIN LOOKUP REPORT</span></div>
-        </div>
-        <div class="pdf-date">產生時間：${escapeHtml(new Intl.DateTimeFormat('zh-TW', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()))}</div>
-      </header>
-
-      <section class="pdf-title-block">
-        <span>DOMAIN LOOKUP</span>
-        <h1>${escapeHtml(data.domain || '—')}</h1>
-        <p>${data.registered === true ? '此網域已有註冊紀錄' : data.registered === false ? '目前查無註冊紀錄' : '目前無法確認註冊狀態'}</p>
-      </section>
-
-      <div class="pdf-summary-grid">
-        <div class="pdf-summary"><span>註冊商</span><strong>${escapeHtml(data.registrar?.name || '未提供')}</strong></div>
-        <div class="pdf-summary"><span>建立日期</span><strong>${escapeHtml(formatDate(data.dates?.registration))}</strong></div>
-        <div class="pdf-summary"><span>到期日期</span><strong>${escapeHtml(formatDate(data.dates?.expiration))}</strong></div>
-        <div class="pdf-summary"><span>最後更新</span><strong>${escapeHtml(formatDate(data.dates?.updated))}</strong></div>
-      </div>
-
-      <section class="pdf-block">
-        <h2>Nameserver</h2>
-        <div class="pdf-list">${list(ns)}</div>
-      </section>
-
-      <section class="pdf-block">
-        <h2>DNS 記錄</h2>
-        <div class="pdf-dns-grid">
-          <div><b>A</b>${list(dns.A, '查無記錄')}</div>
-          <div><b>AAAA</b>${list(dns.AAAA, '查無記錄')}</div>
-          <div><b>MX</b>${list(dns.MX, '查無記錄')}</div>
-          <div><b>NS</b>${list(dns.NS, '查無記錄')}</div>
-        </div>
-      </section>
-
-      <section class="pdf-block">
-        <h2>DNS 區域解析狀態</h2>
-        <p class="pdf-helper">台灣、美國、日本、新加坡 · Google Public DNS + EDNS Client Subnet 區域模擬</p>
-        <div class="pdf-region-grid">${propagationHtml}</div>
-      </section>
-
-      <footer class="pdf-report-footer">
-        <span>查詢網址</span>
-        <code>${escapeHtml(getResultUrl(data.domain))}</code>
-        <p>區域解析結果僅供快速比對；CDN 可能依地區回傳不同 IP，並不一定代表 DNS 尚未完成更新。</p>
-      </footer>`;
-    document.body.appendChild(report);
-    return report;
-  }
-
-  function createPdfMask() {
-    const mask = document.createElement('div');
-    mask.className = 'pdf-generating-mask';
-    mask.innerHTML = '<span class="pdf-mask-spinner"></span><strong>正在產生 PDF…</strong><small>正在整理查詢結果，請稍候</small>';
-    document.body.appendChild(mask);
-    return mask;
-  }
-
-  async function exportPdf() {
-    if (!currentResult?.domain) return;
-    const originalLabel = downloadPdfButton.querySelector('strong')?.textContent || '產出 PDF';
-    const strong = downloadPdfButton.querySelector('strong');
-    if (strong) strong.textContent = 'PDF 產生中…';
-    downloadPdfButton.disabled = true;
-    if (shareDialog?.open) shareDialog.close();
-
-    let report = null;
-    let mask = null;
-
-    try {
-      if (typeof window.html2pdf !== 'function') {
-        throw new Error('PDF 元件尚未載入完成');
-      }
-
-      mask = createPdfMask();
-      report = createPdfReport();
-
-      if (document.fonts?.ready) await document.fonts.ready;
-      await Promise.all([...report.querySelectorAll('img')].map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve) => {
-          img.addEventListener('load', resolve, { once: true });
-          img.addEventListener('error', resolve, { once: true });
-        });
-      }));
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-      await window.html2pdf().set({
-        margin: [8, 8, 8, 8],
-        filename: `WUMETAX-${currentResult.domain}-domain-report.pdf`,
-        image: { type: 'jpeg', quality: 0.97 },
-        html2canvas: {
-          scale: 1.6,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          logging: false,
-          windowWidth: 900,
-          windowHeight: 1200,
-          scrollX: 0,
-          scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-summary', '.pdf-region-card', '.pdf-block'] }
-      }).from(report).save();
-
-      showToast('PDF 已產出');
-    } catch (error) {
-      console.error(error);
-      showToast(error?.message || 'PDF 產生失敗，請稍後再試');
-    } finally {
-      report?.remove();
-      mask?.remove();
-      downloadPdfButton.disabled = false;
-      if (strong) strong.textContent = originalLabel;
-    }
   }
 
   function setupReveal() {
@@ -599,20 +425,12 @@
     else showToast('目前沒有 Nameserver 可複製');
   });
   $('#copyRaw').addEventListener('click', () => currentResult && copyText(escapeForCopy(currentResult.raw || currentResult), 'JSON 已複製'));
-  $('#shareResult').addEventListener('click', openShareDialog);
-  shareUrlButton.addEventListener('click', shareResultUrl);
-  downloadPdfButton.addEventListener('click', exportPdf);
+  $('#shareResult').addEventListener('click', copyResultUrl);
 
   $('#clearHistory').addEventListener('click', () => {
     localStorage.removeItem(HISTORY_KEY);
     renderHistory();
     showToast('查詢紀錄已清除');
-  });
-
-  shareDialog.addEventListener('click', (event) => {
-    const rect = shareDialog.getBoundingClientRect();
-    const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
-    if (!inside) shareDialog.close();
   });
 
   renderHistory();
