@@ -81,7 +81,7 @@
         </div>
         <div class="result-actions">
           <button id="copyDomain" class="ghost-button" type="button">複製網域</button>
-          <button id="shareResult" class="ghost-button ghost-button-accent" type="button">分享 / PDF</button>
+          <button id="shareResult" class="ghost-button ghost-button-accent" type="button">複製查詢網址</button>
         </div>
       </div>
 
@@ -177,29 +177,6 @@
     </div>
     <div class="shell footer-bottom">© 2022–2026 Wumetax LTD. · Domain Lookup Tool</div>
   </footer>
-
-  <dialog id="shareDialog" class="share-dialog">
-    <form method="dialog" class="share-card">
-      <button class="dialog-close" value="cancel" aria-label="關閉">×</button>
-      <div class="share-icon"><img src="/assets/images/wumetax-logo.webp" alt="" /></div>
-      <span class="section-kicker">SHARE RESULT</span>
-      <h2>分享查詢結果</h2>
-      <p id="shareDialogText">可產出 PDF，或直接複製可再次開啟此網域查詢的專屬網址。</p>
-      <div class="share-options">
-        <button id="downloadPdf" class="share-option" type="button">
-          <span class="share-option-icon">PDF</span>
-          <span><strong>產出 PDF</strong><small>下載目前查詢結果，方便留存或傳給客戶</small></span>
-        </button>
-        <button id="shareUrl" class="share-option" type="button">
-          <span class="share-option-icon">↗</span>
-          <span><strong>複製搜尋結果網址</strong><small>點一下直接複製網址，不會開啟系統分享或 Mail</small></span>
-        </button>
-      </div>
-      <div class="share-url-preview"><span>查詢網址</span><code id="shareUrlPreview">—</code></div>
-    </form>
-  </dialog>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
   <script src="/assets/js/app.js" defer></script>
 </body>
 </html>
