@@ -48,7 +48,7 @@
         <div class="lookup-row">
           <div class="input-wrap">
             <span class="input-icon" aria-hidden="true">↗</span>
-            <input id="domainInput" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：wumetax.com" maxlength="253" />
+            <input id="domainInput" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：example.com" maxlength="253" />
             <button id="clearInput" class="clear-input" type="button" aria-label="清除輸入" hidden>×</button>
           </div>
           <button id="lookupButton" class="button lookup-button" type="submit">
@@ -65,9 +65,9 @@
 
       <div class="quick-row" aria-label="快速範例">
         <span>快速測試</span>
-        <button class="quick-chip" type="button" data-domain="wumetax.com">wumetax.com</button>
         <button class="quick-chip" type="button" data-domain="google.com">google.com</button>
         <button class="quick-chip" type="button" data-domain="twnic.tw">twnic.tw</button>
+        <button class="quick-chip" type="button" data-domain="cloudflare.com">cloudflare.com</button>
       </div>
     </section>
 
@@ -129,6 +129,18 @@
           <div id="dnsRecords" class="dns-records"></div>
         </article>
 
+        <article class="detail-card propagation-card">
+          <div class="card-heading">
+            <div>
+              <span class="section-kicker">DNS PROPAGATION</span>
+              <h3>DNS 區域解析狀態</h3>
+              <p>快速查看台灣、美國、日本、新加坡的公開 DNS 解析結果。不同地區若顯示不同 IP，可能是 DNS 尚在更新，也可能是 CDN 的正常區域分流。</p>
+            </div>
+          </div>
+          <div id="propagationGrid" class="propagation-grid"></div>
+          <p class="propagation-note">區域結果透過 Google Public DNS + EDNS Client Subnet 模擬，作為快速比對參考，並非實體測點。</p>
+        </article>
+
         <article class="detail-card">
           <div class="card-heading"><div><span class="section-kicker">DOMAIN STATUS</span><h3>網域狀態</h3></div></div>
           <div id="statusList" class="status-list"></div>
@@ -172,7 +184,7 @@
       <div class="share-icon"><img src="/assets/images/wumetax-logo.webp" alt="" /></div>
       <span class="section-kicker">SHARE RESULT</span>
       <h2>分享查詢結果</h2>
-      <p id="shareDialogText">可產出 PDF，或分享可再次開啟此網域查詢的專屬網址。</p>
+      <p id="shareDialogText">可產出 PDF，或直接複製可再次開啟此網域查詢的專屬網址。</p>
       <div class="share-options">
         <button id="downloadPdf" class="share-option" type="button">
           <span class="share-option-icon">PDF</span>
@@ -180,7 +192,7 @@
         </button>
         <button id="shareUrl" class="share-option" type="button">
           <span class="share-option-icon">↗</span>
-          <span><strong>分享搜尋結果網址</strong><small>網址包含查詢網域，開啟後會自動重新查詢</small></span>
+          <span><strong>複製搜尋結果網址</strong><small>點一下直接複製網址，不會開啟系統分享或 Mail</small></span>
         </button>
       </div>
       <div class="share-url-preview"><span>查詢網址</span><code id="shareUrlPreview">—</code></div>
