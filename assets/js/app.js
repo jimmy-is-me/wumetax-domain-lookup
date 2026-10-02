@@ -1,7 +1,10 @@
 (() => {
   'use strict';
 
-  const $ = (selector) => document.querySelector(selector);
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const HISTORY_KEY = 'wumetax_domain_lookup_history_v1';
+
   const form = $('#lookupForm');
   const input = $('#domainInput');
   const clearInput = $('#clearInput');
@@ -11,50 +14,63 @@
   const registeredContent = $('#registeredContent');
   const historyList = $('#historyList');
   const historyEmpty = $('#historyEmpty');
-  const HISTORY_KEY = 'wumetax_domain_lookup_history_v1';
+  const shareDialog = $('#shareDialog');
+  const shareUrlPreview = $('#shareUrlPreview');
+  const downloadPdfButton = $('#downloadPdf');
+  const shareUrlButton = $('#shareUrl');
+
   let currentResult = null;
+  let toastTimer = null;
 
   function normalizeInput(value) {
-    let raw = (value || '').trim();
-    if (!raw) return '';
-    if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+    let text = String(value || '').trim();
+    if (!text) return '';
     try {
-      const url = new URL(raw);
-      return url.hostname.replace(/^www\./i, '').replace(/\.$/, '').toLowerCase();
+      const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+      text = url.hostname;
     } catch {
-      return value.trim().replace(/^www\./i, '').replace(/\.$/, '').toLowerCase();
+      text = text.replace(/^https?:\/\//i, '').split('/')[0];
     }
+    return text.replace(/^www\./i, '').replace(/\.$/, '').toLowerCase();
   }
 
   function formatDate(value) {
     if (!value) return '未提供';
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '未提供';
-    return new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('zh-TW', {
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(date);
   }
 
   function relativeDays(value, mode = 'future') {
     if (!value) return 'Registry 未提供日期';
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Registry 未提供日期';
-    const diff = date.getTime() - Date.now();
-    const days = Math.round(Math.abs(diff) / 86400000);
+    if (Number.isNaN(date.getTime())) return '';
+    const today = new Date();
+    const days = Math.round((date.getTime() - today.getTime()) / 86400000);
+
     if (mode === 'age') {
-      const years = Math.floor(days / 365.25);
-      return years > 0 ? `約 ${years} 年` : `約 ${days} 天`;
+      const years = Math.max(0, Math.floor((today.getTime() - date.getTime()) / 31557600000));
+      return years > 0 ? `約 ${years} 年前建立` : '建立未滿 1 年';
     }
-    return diff >= 0 ? `約 ${days} 天後` : `已過期約 ${days} 天`;
+    if (days > 0) return `約 ${days.toLocaleString('zh-TW')} 天後到期`;
+    if (days === 0) return '今天到期';
+    return `已超過 ${Math.abs(days).toLocaleString('zh-TW')} 天`;
   }
 
-  function escapeForCopy(value) { return typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
+  function escapeForCopy(value) {
+    return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  }
 
   async function copyText(text, label = '已複製') {
+    const value = String(text || '');
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(value);
       showToast(label);
     } catch {
       const area = document.createElement('textarea');
-      area.value = text;
+      area.value = value;
       area.style.position = 'fixed';
       area.style.opacity = '0';
       document.body.appendChild(area);
@@ -65,9 +81,8 @@
     }
   }
 
-  let toastTimer;
   function showToast(message) {
-    let toast = document.querySelector('.toast');
+    let toast = $('.toast');
     if (!toast) {
       toast = document.createElement('div');
       toast.className = 'toast';
@@ -76,7 +91,7 @@
     toast.textContent = message;
     toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1900);
   }
 
   function showMessage(message, type = 'notice') {
@@ -86,6 +101,10 @@
     box.className = `message-box${type === 'error' ? ' error' : ''}`;
     box.textContent = message;
     messageSection.appendChild(box);
+    messageSection.animate?.([
+      { opacity: 0, transform: 'translateY(-6px)' },
+      { opacity: 1, transform: 'translateY(0)' }
+    ], { duration: 260, easing: 'ease-out' });
   }
 
   function hideMessage() {
@@ -102,6 +121,13 @@
   function setText(selector, value) {
     const node = $(selector);
     if (node) node.textContent = value ?? '—';
+  }
+
+  function getResultUrl(domain = currentResult?.domain) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    if (domain) url.searchParams.set('domain', domain);
+    return url.toString();
   }
 
   function renderNameservers(items = []) {
@@ -179,6 +205,8 @@
     currentResult = data;
     hideMessage();
     resultSection.hidden = false;
+    resultSection.classList.remove('is-visible');
+
     const domain = data.domain || '—';
     setText('#resultDomain', domain);
     setText('#sourceBadge', data.source === 'rdap' ? 'RDAP' : (data.source || 'LOOKUP').toUpperCase());
@@ -222,18 +250,23 @@
     setText('#rawJson', JSON.stringify(data.raw || data, null, 2));
 
     const url = new URL(window.location.href);
+    url.search = '';
     url.searchParams.set('domain', domain);
     history.replaceState(null, '', url);
     saveHistory(domain);
     renderHistory();
 
-    setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    requestAnimationFrame(() => {
+      resultSection.classList.add('is-visible');
+      setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    });
   }
 
   async function lookup(domainValue) {
     const domain = normalizeInput(domainValue);
     input.value = domain;
     clearInput.hidden = !domain;
+
     if (!domain || !domain.includes('.')) {
       resultSection.hidden = true;
       showMessage('請輸入完整網域，例如 wumetax.com。', 'error');
@@ -244,7 +277,7 @@
     hideMessage();
     try {
       const response = await fetch(`/api/domain?domain=${encodeURIComponent(domain)}`, {
-        headers: { 'Accept': 'application/json' }
+        headers: { Accept: 'application/json' }
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok && typeof data.registered === 'undefined') {
@@ -256,7 +289,7 @@
       showMessage(error?.message || '查詢失敗，請稍後再試。', 'error');
     } finally {
       setLoading(false);
-      input.focus({ preventScroll: true });
+      if (window.innerWidth > 720) input.focus({ preventScroll: true });
     }
   }
 
@@ -285,6 +318,88 @@
     });
   }
 
+  function openShareDialog() {
+    if (!currentResult?.domain) return;
+    shareUrlPreview.textContent = getResultUrl();
+    if (typeof shareDialog.showModal === 'function') shareDialog.showModal();
+    else copyText(getResultUrl(), '查詢網址已複製');
+  }
+
+  async function shareResultUrl() {
+    if (!currentResult?.domain) return;
+    const url = getResultUrl();
+    const title = `${currentResult.domain} 網域查詢｜WUMETAX`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text: `${currentResult.domain} 網域查詢結果`, url });
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      }
+    }
+    await copyText(url, '查詢網址已複製');
+  }
+
+  async function exportPdf() {
+    if (!currentResult?.domain) return;
+    const originalLabel = downloadPdfButton.querySelector('strong')?.textContent || '產出 PDF';
+    const strong = downloadPdfButton.querySelector('strong');
+    if (strong) strong.textContent = 'PDF 產生中…';
+    downloadPdfButton.disabled = true;
+
+    const clone = resultSection.cloneNode(true);
+    clone.removeAttribute('hidden');
+    clone.classList.add('pdf-export', 'is-visible');
+    clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+    clone.querySelectorAll('button,.result-actions,.raw-details').forEach((node) => node.remove());
+    clone.style.position = 'fixed';
+    clone.style.left = '-10000px';
+    clone.style.top = '0';
+    clone.style.zIndex = '-1';
+    document.body.appendChild(clone);
+
+    try {
+      if (typeof window.html2pdf === 'function') {
+        await window.html2pdf().set({
+          margin: [8, 8, 8, 8],
+          filename: `WUMETAX-${currentResult.domain}-domain-report.pdf`,
+          image: { type: 'jpeg', quality: 0.96 },
+          html2canvas: { scale: 1.65, useCORS: true, backgroundColor: '#ffffff' },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        }).from(clone).save();
+        showToast('PDF 已產出');
+      } else {
+        showToast('PDF 元件載入失敗，改用列印功能');
+        window.print();
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('PDF 產生失敗，請稍後再試');
+    } finally {
+      clone.remove();
+      downloadPdfButton.disabled = false;
+      if (strong) strong.textContent = originalLabel;
+    }
+  }
+
+  function setupReveal() {
+    const targets = $$('.reveal:not(.is-visible)');
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    targets.forEach((el) => observer.observe(el));
+  }
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     lookup(input.value);
@@ -297,31 +412,35 @@
     input.focus();
   });
 
-  document.querySelectorAll('[data-domain]').forEach((button) => {
-    button.addEventListener('click', () => lookup(button.dataset.domain));
-  });
+  $$('#lookupForm, body').forEach(() => {});
+  $$('[data-domain]').forEach((button) => button.addEventListener('click', () => lookup(button.dataset.domain)));
 
   $('#copyDomain').addEventListener('click', () => currentResult?.domain && copyText(currentResult.domain, '網域已複製'));
   $('#copyNs').addEventListener('click', () => {
     const list = currentResult?.nameservers || [];
     if (list.length) copyText(list.join('\n'), 'Nameserver 已複製');
+    else showToast('目前沒有 Nameserver 可複製');
   });
   $('#copyRaw').addEventListener('click', () => currentResult && copyText(escapeForCopy(currentResult.raw || currentResult), 'JSON 已複製'));
-  $('#shareResult').addEventListener('click', async () => {
-    if (!currentResult?.domain) return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('domain', currentResult.domain);
-    if (navigator.share) {
-      try { await navigator.share({ title: `${currentResult.domain} 網域查詢`, url: url.toString() }); return; } catch {}
-    }
-    copyText(url.toString(), '查詢連結已複製');
-  });
+  $('#shareResult').addEventListener('click', openShareDialog);
+  shareUrlButton.addEventListener('click', shareResultUrl);
+  downloadPdfButton.addEventListener('click', exportPdf);
+
   $('#clearHistory').addEventListener('click', () => {
     localStorage.removeItem(HISTORY_KEY);
     renderHistory();
+    showToast('查詢紀錄已清除');
+  });
+
+  shareDialog.addEventListener('click', (event) => {
+    const rect = shareDialog.getBoundingClientRect();
+    const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+    if (!inside) shareDialog.close();
   });
 
   renderHistory();
+  setupReveal();
+
   const preset = new URLSearchParams(window.location.search).get('domain');
   if (preset) {
     input.value = preset;

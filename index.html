@@ -2,14 +2,15 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <meta name="theme-color" content="#0b7a53" />
+  <meta name="theme-color" content="#0d8259" />
   <title>網域 WHOIS / RDAP 查詢｜WUMETAX</title>
   <meta name="description" content="免費查詢網域註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。" />
   <meta property="og:title" content="網域 WHOIS / RDAP 查詢｜WUMETAX" />
   <meta property="og:description" content="輸入網域即可快速查看註冊與 DNS 資訊。" />
   <meta property="og:type" content="website" />
+  <link rel="icon" href="/assets/images/wumetax-logo.webp" type="image/webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -18,11 +19,12 @@
 <body>
   <div class="ambient ambient-a" aria-hidden="true"></div>
   <div class="ambient ambient-b" aria-hidden="true"></div>
+  <div class="ambient-grid" aria-hidden="true"></div>
 
   <header class="site-header">
     <div class="shell header-inner">
-      <a class="brand" href="https://wumetax.com/" target="_blank" rel="noopener">
-        <span class="brand-mark" aria-hidden="true">W</span>
+      <a class="brand" href="https://wumetax.com/" target="_blank" rel="noopener" aria-label="WUMETAX 官方網站">
+        <img class="brand-logo" src="/assets/images/wumetax-logo.webp" alt="WUMETAX Logo" />
         <span class="brand-copy">
           <strong>WUMETAX</strong>
           <small>WEBSITE SOLUTIONS</small>
@@ -36,7 +38,7 @@
   </header>
 
   <main>
-    <section class="hero shell">
+    <section class="hero shell reveal is-visible">
       <div class="eyebrow"><span class="pulse"></span> DOMAIN · RDAP · DNS</div>
       <h1>網域資訊，一次查清楚。</h1>
       <p class="hero-lead">輸入網域即可查詢註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。</p>
@@ -71,7 +73,7 @@
 
     <section id="messageSection" class="shell message-section" hidden aria-live="polite"></section>
 
-    <section id="resultSection" class="shell result-section" hidden aria-live="polite">
+    <section id="resultSection" class="shell result-section reveal" hidden aria-live="polite">
       <div class="result-head">
         <div>
           <span class="section-kicker">LOOKUP RESULT</span>
@@ -79,7 +81,7 @@
         </div>
         <div class="result-actions">
           <button id="copyDomain" class="ghost-button" type="button">複製網域</button>
-          <button id="shareResult" class="ghost-button" type="button">分享結果</button>
+          <button id="shareResult" class="ghost-button ghost-button-accent" type="button">分享 / PDF</button>
         </div>
       </div>
 
@@ -96,48 +98,24 @@
       </article>
 
       <div id="registeredContent">
-        <div class="info-grid">
-          <article class="info-card">
-            <span class="info-label">註冊商 Registrar</span>
-            <strong id="registrar">—</strong>
-            <small id="registrarId">—</small>
-          </article>
-          <article class="info-card">
-            <span class="info-label">建立日期</span>
-            <strong id="registeredAt">—</strong>
-            <small id="domainAge">—</small>
-          </article>
-          <article class="info-card">
-            <span class="info-label">到期日期</span>
-            <strong id="expiresAt">—</strong>
-            <small id="expiryHint">—</small>
-          </article>
-          <article class="info-card">
-            <span class="info-label">最後更新</span>
-            <strong id="updatedAt">—</strong>
-            <small>Registry / Registrar 提供</small>
-          </article>
+        <div class="info-grid stagger-grid">
+          <article class="info-card"><span class="info-label">註冊商 Registrar</span><strong id="registrar">—</strong><small id="registrarId">—</small></article>
+          <article class="info-card"><span class="info-label">建立日期</span><strong id="registeredAt">—</strong><small id="domainAge">—</small></article>
+          <article class="info-card"><span class="info-label">到期日期</span><strong id="expiresAt">—</strong><small id="expiryHint">—</small></article>
+          <article class="info-card"><span class="info-label">最後更新</span><strong id="updatedAt">—</strong><small>Registry / Registrar 提供</small></article>
         </div>
 
         <div class="detail-grid">
           <article class="detail-card">
             <div class="card-heading">
-              <div>
-                <span class="section-kicker">NAMESERVER</span>
-                <h3>網域名稱伺服器</h3>
-              </div>
+              <div><span class="section-kicker">NAMESERVER</span><h3>網域名稱伺服器</h3></div>
               <button id="copyNs" class="mini-button" type="button">全部複製</button>
             </div>
             <div id="nameserverList" class="list-stack"></div>
           </article>
 
           <article class="detail-card">
-            <div class="card-heading">
-              <div>
-                <span class="section-kicker">SECURITY</span>
-                <h3>DNS 與安全狀態</h3>
-              </div>
-            </div>
+            <div class="card-heading"><div><span class="section-kicker">SECURITY</span><h3>DNS 與安全狀態</h3></div></div>
             <div class="metric-list">
               <div class="metric-row"><span>DNSSEC</span><strong id="dnssec">—</strong></div>
               <div class="metric-row"><span>Cloudflare DNS</span><strong id="cloudflareDns">—</strong></div>
@@ -147,23 +125,12 @@
         </div>
 
         <article class="detail-card dns-card">
-          <div class="card-heading">
-            <div>
-              <span class="section-kicker">DNS RECORDS</span>
-              <h3>常用 DNS 記錄</h3>
-              <p>方便快速確認網站、郵件與 Nameserver 指向。</p>
-            </div>
-          </div>
+          <div class="card-heading"><div><span class="section-kicker">DNS RECORDS</span><h3>常用 DNS 記錄</h3><p>方便快速確認網站、郵件與 Nameserver 指向。</p></div></div>
           <div id="dnsRecords" class="dns-records"></div>
         </article>
 
         <article class="detail-card">
-          <div class="card-heading">
-            <div>
-              <span class="section-kicker">DOMAIN STATUS</span>
-              <h3>網域狀態</h3>
-            </div>
-          </div>
+          <div class="card-heading"><div><span class="section-kicker">DOMAIN STATUS</span><h3>網域狀態</h3></div></div>
           <div id="statusList" class="status-list"></div>
         </article>
       </div>
@@ -175,52 +142,52 @@
       </details>
     </section>
 
-    <section class="shell history-section">
+    <section class="shell history-section reveal">
       <div class="section-title-row">
-        <div>
-          <span class="section-kicker">RECENT LOOKUPS</span>
-          <h2>最近查詢</h2>
-        </div>
+        <div><span class="section-kicker">RECENT LOOKUPS</span><h2>最近查詢</h2></div>
         <button id="clearHistory" class="text-button" type="button">清除紀錄</button>
       </div>
       <div id="historyList" class="history-list"></div>
       <p id="historyEmpty" class="history-empty">查詢紀錄只保留在這台裝置的瀏覽器中。</p>
     </section>
 
-    <section class="shell notice-grid">
-      <article class="notice-card">
-        <span class="notice-number">01</span>
-        <h3>查不到不代表一定能買</h3>
-        <p>部分網域可能屬於 Registry 保留字、Premium Domain 或有特殊註冊限制，因此最終是否可註冊仍以實際註冊商結帳結果為準。</p>
-      </article>
-      <article class="notice-card">
-        <span class="notice-number">02</span>
-        <h3>隱私資料可能被遮蔽</h3>
-        <p>依 Registry、Registrar 與隱私政策不同，網域持有人姓名、Email 或地址可能不公開，這屬於正常情況。</p>
-      </article>
-      <article class="notice-card accent-card">
-        <span class="notice-number">03</span>
-        <h3>需要網域或網站協助？</h3>
-        <p>WUMETAX 可協助網域、DNS、Cloudflare、網站主機、WordPress 建置與後續維護。</p>
-        <a href="https://wumetax.com/contact/" target="_blank" rel="noopener">網站需求諮詢 →</a>
-      </article>
+    <section class="shell notice-grid reveal">
+      <article class="notice-card"><span class="notice-number">01</span><h3>查不到不代表一定能買</h3><p>部分網域可能屬於 Registry 保留字、Premium Domain 或有特殊註冊限制，因此最終是否可註冊仍以實際註冊商結帳結果為準。</p></article>
+      <article class="notice-card"><span class="notice-number">02</span><h3>隱私資料可能被遮蔽</h3><p>依 Registry、Registrar 與隱私政策不同，網域持有人姓名、Email 或地址可能不公開，這屬於正常情況。</p></article>
+      <article class="notice-card accent-card"><span class="notice-number">03</span><h3>需要網域或網站協助？</h3><p>WUMETAX 可協助網域、DNS、Cloudflare、網站主機、WordPress 建置與後續維護。</p><a href="https://wumetax.com/contact/" target="_blank" rel="noopener">網站需求諮詢 →</a></article>
     </section>
   </main>
 
-  <footer class="site-footer">
+  <footer class="site-footer reveal">
     <div class="shell footer-inner">
-      <div>
-        <strong>WUMETAX LTD.</strong>
-        <p>企業網站建置、電子商務、主機代管與網站維護。</p>
-      </div>
-      <div class="footer-links">
-        <a href="https://wumetax.com/" target="_blank" rel="noopener">官方網站</a>
-        <a href="https://wumetax.com/contact/" target="_blank" rel="noopener">聯絡我們</a>
-      </div>
+      <div class="footer-brand"><img src="/assets/images/wumetax-logo.webp" alt="" /><div><strong>WUMETAX LTD.</strong><p>企業網站建置、電子商務、主機代管與網站維護。</p></div></div>
+      <div class="footer-links"><a href="https://wumetax.com/" target="_blank" rel="noopener">官方網站</a><a href="https://wumetax.com/contact/" target="_blank" rel="noopener">聯絡我們</a></div>
     </div>
     <div class="shell footer-bottom">© 2022–2026 Wumetax LTD. · Domain Lookup Tool</div>
   </footer>
 
+  <dialog id="shareDialog" class="share-dialog">
+    <form method="dialog" class="share-card">
+      <button class="dialog-close" value="cancel" aria-label="關閉">×</button>
+      <div class="share-icon"><img src="/assets/images/wumetax-logo.webp" alt="" /></div>
+      <span class="section-kicker">SHARE RESULT</span>
+      <h2>分享查詢結果</h2>
+      <p id="shareDialogText">可產出 PDF，或分享可再次開啟此網域查詢的專屬網址。</p>
+      <div class="share-options">
+        <button id="downloadPdf" class="share-option" type="button">
+          <span class="share-option-icon">PDF</span>
+          <span><strong>產出 PDF</strong><small>下載目前查詢結果，方便留存或傳給客戶</small></span>
+        </button>
+        <button id="shareUrl" class="share-option" type="button">
+          <span class="share-option-icon">↗</span>
+          <span><strong>分享搜尋結果網址</strong><small>網址包含查詢網域，開啟後會自動重新查詢</small></span>
+        </button>
+      </div>
+      <div class="share-url-preview"><span>查詢網址</span><code id="shareUrlPreview">—</code></div>
+    </form>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
   <script src="/assets/js/app.js" defer></script>
 </body>
 </html>
