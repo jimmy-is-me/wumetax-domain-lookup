@@ -1,6 +1,14 @@
 const IANA_BOOTSTRAP = 'https://data.iana.org/rdap/dns.json';
 const DNS_ENDPOINT = 'https://cloudflare-dns.com/dns-query';
+const GOOGLE_DNS_JSON = 'https://dns.google/resolve';
 const CACHE_SECONDS = 300;
+
+const PROPAGATION_REGIONS = [
+  { code: 'TW', name: '台灣', flag: '🇹🇼', subnet: '168.95.1.0/24' },
+  { code: 'US', name: '美國', flag: '🇺🇸', subnet: '4.2.2.0/24' },
+  { code: 'JP', name: '日本', flag: '🇯🇵', subnet: '210.130.1.0/24' },
+  { code: 'SG', name: '新加坡', flag: '🇸🇬', subnet: '165.21.83.0/24' }
+];
 
 const STATUS_LABELS = {
   addPeriod: '新增寬限期',
@@ -164,6 +172,64 @@ async function getDns(domain) {
   return { A: a, AAAA: aaaa, MX: mx, NS: ns };
 }
 
+async function googleRegionalDns(domain, type, subnet) {
+  try {
+    const url = new URL(GOOGLE_DNS_JSON);
+    url.searchParams.set('name', domain);
+    url.searchParams.set('type', type);
+    url.searchParams.set('edns_client_subnet', subnet);
+
+    const response = await fetch(url.toString(), {
+      headers: { 'accept': 'application/dns-json, application/json' },
+      cf: { cacheTtl: 120, cacheEverything: true }
+    });
+    if (!response.ok) return { ok: false, status: null, answers: [], ttl: null };
+
+    const data = await response.json();
+    const answers = (data.Answer || []).map((answer) => ({
+      type: Number(answer.type),
+      ttl: Number(answer.TTL) || null,
+      data: String(answer.data || '').replace(/\.$/, '')
+    }));
+
+    const ttls = answers.map((item) => item.ttl).filter((ttl) => Number.isFinite(ttl) && ttl >= 0);
+    return {
+      ok: Number(data.Status) === 0,
+      status: Number(data.Status),
+      answers,
+      ttl: ttls.length ? Math.min(...ttls) : null
+    };
+  } catch {
+    return { ok: false, status: null, answers: [], ttl: null };
+  }
+}
+
+async function getPropagation(domain) {
+  return Promise.all(PROPAGATION_REGIONS.map(async (region) => {
+    const [aResult, nsResult] = await Promise.all([
+      googleRegionalDns(domain, 'A', region.subnet),
+      googleRegionalDns(domain, 'NS', region.subnet)
+    ]);
+
+    const a = aResult.answers.filter((item) => item.type === 1).map((item) => item.data);
+    const cname = aResult.answers.filter((item) => item.type === 5).map((item) => item.data);
+    const ns = nsResult.answers.filter((item) => item.type === 2).map((item) => item.data);
+    const hasRecords = a.length || cname.length || ns.length;
+    const querySucceeded = aResult.ok || nsResult.ok;
+
+    return {
+      code: region.code,
+      name: region.name,
+      flag: region.flag,
+      status: hasRecords ? 'resolved' : (querySucceeded ? 'empty' : 'error'),
+      a,
+      cname,
+      ns,
+      ttl: aResult.ttl ?? nsResult.ttl ?? null
+    };
+  }));
+}
+
 function cloudflareDns(nameservers = []) {
   return nameservers.some((ns) => /\.ns\.cloudflare\.com$/i.test(ns));
 }
@@ -227,6 +293,7 @@ export async function onRequestGet(context) {
         dnssec: null,
         cloudflareDns: false,
         dns: { A: [], AAAA: [], MX: [], NS: [] },
+        propagation: [],
         raw: { status: 404, note: 'Authoritative RDAP returned 404.' }
       };
       const response = json(payload);
@@ -251,7 +318,10 @@ export async function onRequestGet(context) {
       .map((item) => item.ldhName || item.unicodeName)
       .filter(Boolean)
       .map((name) => name.replace(/\.$/, '').toLowerCase());
-    const dns = await getDns(domain);
+    const [dns, propagation] = await Promise.all([
+      getDns(domain),
+      getPropagation(domain)
+    ]);
     const payload = {
       registered: true,
       domain: raw.ldhName?.toLowerCase() || domain,
@@ -269,6 +339,7 @@ export async function onRequestGet(context) {
       dnssec: typeof raw.secureDNS?.delegationSigned === 'boolean' ? raw.secureDNS.delegationSigned : null,
       cloudflareDns: cloudflareDns(nameservers.length ? nameservers : dns.NS),
       dns,
+      propagation,
       raw
     };
 
