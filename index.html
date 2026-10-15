@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <meta name="theme-color" content="#0d8259" />
+  <meta name="theme-color" content="#0052FF" />
   <title>網域 WHOIS / RDAP 查詢｜WUMETAX</title>
   <meta name="description" content="免費查詢網域註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。" />
   <meta property="og:title" content="網域 WHOIS / RDAP 查詢｜WUMETAX" />
@@ -13,13 +13,11 @@
   <link rel="icon" href="/assets/images/wumetax-logo.webp" type="image/webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/css/styles.css" />
 </head>
 <body>
-  <div class="ambient ambient-a" aria-hidden="true"></div>
-  <div class="ambient ambient-b" aria-hidden="true"></div>
-  <div class="ambient-grid" aria-hidden="true"></div>
+  <a class="skip-link" href="#domainInput">跳至網域查詢</a>
 
   <header class="site-header">
     <div class="shell header-inner">
@@ -39,16 +37,16 @@
 
   <main>
     <section class="hero shell reveal is-visible">
-      <div class="eyebrow"><span class="pulse"></span> DOMAIN · RDAP · DNS</div>
-      <h1>網域資訊，一次查清楚。</h1>
+      <div class="hero-copy"><div class="eyebrow"><span class="pulse"></span> WUMETAX LAB / DOMAIN INTELLIGENCE</div>
+      <p class="display-title" lang="en">Every domain.<br><span class="gradient-text">A clear picture.</span></p><h1>網域資訊，一次查清楚。</h1>
       <p class="hero-lead">輸入網域即可查詢註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。</p>
 
       <form id="lookupForm" class="lookup-card" novalidate>
-        <label class="sr-only" for="domainInput">輸入網域</label>
+        <label class="lookup-label" for="domainInput">從一個網域開始 <span>DOMAIN LOOKUP</span></label>
         <div class="lookup-row">
           <div class="input-wrap">
             <span class="input-icon" aria-hidden="true">↗</span>
-            <input id="domainInput" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：example.com" maxlength="253" />
+            <input id="domainInput" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：example.com" maxlength="2048" aria-describedby="lookupHint" />
             <button id="clearInput" class="clear-input" type="button" aria-label="清除輸入" hidden>×</button>
           </div>
           <button id="lookupButton" class="button lookup-button" type="submit">
@@ -56,7 +54,7 @@
             <span class="button-loader" aria-hidden="true"></span>
           </button>
         </div>
-        <div class="lookup-meta">
+        <div id="lookupHint" class="lookup-meta">
           <span>支援網址直接貼上，會自動整理成網域格式</span>
           <span class="dot">•</span>
           <span>資料以 Registry RDAP 為主</span>
@@ -69,7 +67,11 @@
         <button class="quick-chip" type="button" data-domain="twnic.tw">twnic.tw</button>
         <button class="quick-chip" type="button" data-domain="cloudflare.com">cloudflare.com</button>
       </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><div class="visual-cross cross-a">+</div><div class="visual-cross cross-b">+</div><div class="domain-globe"><div class="globe-line"></div><div class="globe-line globe-equator"></div><span>www.</span></div><div class="float-card float-top"><span class="visual-icon">↗</span><div><small>REGISTRATION DATA</small><strong>Know your domain.</strong></div><span class="visual-check">✓</span></div><div class="float-card float-bottom"><span class="mini-label">REGIONAL DNS / 04</span><strong>跨越區域，看見解析</strong><div class="region-tags"><span>TW</span><span>US</span><span>JP</span><span>SG</span></div></div><span class="visual-caption">RDAP + DNS · 資料視覺示意</span></div>
     </section>
+
+    <section class="capability-band" aria-label="查詢功能"><div class="shell capability-inner"><div><span>01 / REGISTRY</span><strong>註冊資訊</strong><small>權威 RDAP 資料來源</small></div><div><span>02 / RECORDS</span><strong>DNS 記錄</strong><small>A · AAAA · MX · NS</small></div><div><span>03 / REGIONS</span><strong>四區解析</strong><small>台灣 · 美國 · 日本 · 新加坡</small></div><div><span>04 / WORKFLOW</span><strong>一鍵分享</strong><small>複製網址，隨時重新查詢</small></div></div></section>
 
     <section id="messageSection" class="shell message-section" hidden aria-live="polite"></section>
 
@@ -163,11 +165,11 @@
       <p id="historyEmpty" class="history-empty">查詢紀錄只保留在這台裝置的瀏覽器中。</p>
     </section>
 
-    <section class="shell notice-grid reveal">
+    <section class="shell guide-section reveal" aria-labelledby="guideTitle"><div class="guide-heading"><span class="eyebrow">GOOD TO KNOW</span><h2 id="guideTitle">讀懂資料，<span class="gradient-text">做對下一步。</span></h2><p>查詢結果是起點。這些細節，讓判斷更精準。</p></div><div class="notice-grid">
       <article class="notice-card"><span class="notice-number">01</span><h3>查不到不代表一定能買</h3><p>部分網域可能屬於 Registry 保留字、Premium Domain 或有特殊註冊限制，因此最終是否可註冊仍以實際註冊商結帳結果為準。</p></article>
       <article class="notice-card"><span class="notice-number">02</span><h3>隱私資料可能被遮蔽</h3><p>依 Registry、Registrar 與隱私政策不同，網域持有人姓名、Email 或地址可能不公開，這屬於正常情況。</p></article>
       <article class="notice-card accent-card"><span class="notice-number">03</span><h3>需要網域或網站協助？</h3><p>WUMETAX 可協助網域、DNS、Cloudflare、網站主機、WordPress 建置與後續維護。</p><a href="https://wumetax.com/contact/" target="_blank" rel="noopener">網站需求諮詢 →</a></article>
-    </section>
+    </div></section>
   </main>
 
   <footer class="site-footer reveal">

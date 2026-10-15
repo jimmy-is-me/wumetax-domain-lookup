@@ -1,0 +1,14 @@
+{
+  "name": "wumetax-domain-lookup",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/api.test.cjs",
+    "test:browser": "node tests/browser.cjs",
+    "dev": "node tests/serve.cjs",
+    "check:functions": "wrangler pages functions build functions --outdir .checks/functions"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1",
+    "wrangler": "^4.151.0"
+  }
+}

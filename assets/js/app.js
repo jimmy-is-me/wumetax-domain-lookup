@@ -17,6 +17,7 @@
 
   let currentResult = null;
   let toastTimer = null;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function normalizeInput(value) {
     let text = String(value || '').trim();
@@ -82,6 +83,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.className = 'toast';
+      toast.setAttribute('role', 'status');
       document.body.appendChild(toast);
     }
     toast.textContent = message;
@@ -97,7 +99,7 @@
     box.className = `message-box${type === 'error' ? ' error' : ''}`;
     box.textContent = message;
     messageSection.appendChild(box);
-    messageSection.animate?.([
+    if (!reducedMotion.matches) messageSection.animate?.([
       { opacity: 0, transform: 'translateY(-6px)' },
       { opacity: 1, transform: 'translateY(0)' }
     ], { duration: 260, easing: 'ease-out' });
@@ -110,6 +112,8 @@
 
   function setLoading(loading) {
     lookupButton.disabled = loading;
+    form.setAttribute('aria-busy', String(loading));
+    lookupButton.setAttribute('aria-label', loading ? '正在查詢網域' : '查詢網域');
     lookupButton.classList.toggle('is-loading', loading);
     input.disabled = loading;
   }
@@ -322,11 +326,12 @@
 
     requestAnimationFrame(() => {
       resultSection.classList.add('is-visible');
-      setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+      setTimeout(() => resultSection.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' }), 80);
     });
   }
 
   async function lookup(domainValue) {
+    if (lookupButton.disabled) return;
     const domain = normalizeInput(domainValue);
     input.value = domain;
     clearInput.hidden = !domain;
@@ -344,7 +349,7 @@
         headers: { Accept: 'application/json' }
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok && typeof data.registered === 'undefined') {
+      if (!response.ok) {
         throw new Error(data.message || `查詢失敗（HTTP ${response.status}）`);
       }
       renderResult(data);
@@ -358,14 +363,17 @@
   }
 
   function getHistory() {
-    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+    try {
+      const items = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      return Array.isArray(items) ? items.filter((item) => typeof item === 'string').slice(0, 8) : [];
+    }
     catch { return []; }
   }
 
   function saveHistory(domain) {
     if (!domain) return;
     const next = [domain, ...getHistory().filter((item) => item !== domain)].slice(0, 8);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch { /* Lookup still works when storage is unavailable. */ }
   }
 
   function renderHistory() {
@@ -428,7 +436,7 @@
   $('#shareResult').addEventListener('click', copyResultUrl);
 
   $('#clearHistory').addEventListener('click', () => {
-    localStorage.removeItem(HISTORY_KEY);
+    try { localStorage.removeItem(HISTORY_KEY); } catch { showToast('瀏覽器無法存取查詢紀錄'); return; }
     renderHistory();
     showToast('查詢紀錄已清除');
   });
