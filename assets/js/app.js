@@ -112,6 +112,7 @@
 
   function setLoading(loading) {
     lookupButton.disabled = loading;
+    $('#refreshResult').disabled = loading;
     form.setAttribute('aria-busy', String(loading));
     lookupButton.setAttribute('aria-label', loading ? '正在查詢網域' : '查詢網域');
     lookupButton.classList.toggle('is-loading', loading);
@@ -130,8 +131,8 @@
     return url.toString();
   }
 
-  function renderNameservers(items = []) {
-    const box = $('#nameserverList');
+  function renderNameservers(items = [], selector = '#nameserverList') {
+    const box = $(selector);
     box.innerHTML = '';
     if (!items.length) {
       const row = document.createElement('div');
@@ -312,6 +313,13 @@
     setText('#rdapHost', data.rdapHost || '未提供');
 
     renderNameservers(data.nameservers || []);
+    renderNameservers(data.rdapNameservers || [], '#rdapNameserverList');
+    setText('#nameserverSource', data.nameserverSource === 'dns' ? '本次 DNS NS 解析 · Cloudflare Resolver' : 'RDAP 註冊資料（DNS 未取得 NS，使用備援）');
+    const checkedAt = data.checkedAt ? new Date(data.checkedAt).toLocaleString('zh-TW', { hour12: false }) : '未提供';
+    setText('#nameserverFreshness', '查詢時間：' + checkedAt + (Number.isFinite(data.nameserverTtl) ? ' · DNS TTL：' + data.nameserverTtl + ' 秒。' : '。') + ' 每次重新向上游查詢；DNS 解析器仍可能保留 TTL 內的快取。');
+    const difference = $('#nameserverDifference');
+    difference.hidden = !data.nameserverMismatch;
+    difference.textContent = 'DNS 與 RDAP 的名稱伺服器不同。上方顯示 DNS 本次回覆；註冊資料或 DNS 傳播可能尚未同步，可展開比對。';
     renderStatuses(data.statuses || []);
     renderDns(data.dns || {});
     renderPropagation(data.propagation || []);
@@ -345,7 +353,8 @@
     setLoading(true);
     hideMessage();
     try {
-      const response = await fetch(`/api/domain?domain=${encodeURIComponent(domain)}`, {
+      const response = await fetch(`/api/domain?domain=${encodeURIComponent(domain)}&fresh=1`, {
+        cache: 'no-store',
         headers: { Accept: 'application/json' }
       });
       const data = await response.json().catch(() => ({}));
@@ -434,6 +443,12 @@
   });
   $('#copyRaw').addEventListener('click', () => currentResult && copyText(escapeForCopy(currentResult.raw || currentResult), 'JSON 已複製'));
   $('#shareResult').addEventListener('click', copyResultUrl);
+  $('#refreshResult').addEventListener('click', () => currentResult?.domain && lookup(currentResult.domain));
+
+  const header = $('.site-header');
+  const updateHeader = () => header.classList.toggle('is-scrolled', window.scrollY > 24);
+  window.addEventListener('scroll', updateHeader, { passive: true });
+  updateHeader();
 
   $('#clearHistory').addEventListener('click', () => {
     try { localStorage.removeItem(HISTORY_KEY); } catch { showToast('瀏覽器無法存取查詢紀錄'); return; }

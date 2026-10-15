@@ -1,7 +1,6 @@
 const IANA_BOOTSTRAP = 'https://data.iana.org/rdap/dns.json';
 const DNS_ENDPOINT = 'https://cloudflare-dns.com/dns-query';
 const GOOGLE_DNS_JSON = 'https://dns.google/resolve';
-const CACHE_SECONDS = 300;
 
 const PROPAGATION_REGIONS = [
   { code: 'TW', name: '台灣', flag: '🇹🇼', subnet: '168.95.1.0/24' },
@@ -41,7 +40,7 @@ function json(data, status = 200, extraHeaders = {}) {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': status === 200 ? `public, max-age=0, s-maxage=${CACHE_SECONDS}` : 'no-store',
+      'cache-control': 'no-store, max-age=0',
       'x-content-type-options': 'nosniff',
       ...extraHeaders
     }
@@ -144,32 +143,38 @@ function formatDnsAnswer(type, answer) {
   return data;
 }
 
+const DNS_TYPES = { A: 1, AAAA: 28, MX: 15, NS: 2 };
+
 async function dnsQuery(domain, type) {
   try {
-    const url = `${DNS_ENDPOINT}?name=${encodeURIComponent(domain)}&type=${encodeURIComponent(type)}`;
-    const response = await fetch(url, {
-      headers: { 'accept': 'application/dns-json' },
-      cf: { cacheTtl: 300, cacheEverything: true }
+    const url = new URL(DNS_ENDPOINT);
+    url.searchParams.set('name', domain);
+    url.searchParams.set('type', type);
+    const response = await fetch(url.toString(), {
+      headers: { accept: 'application/dns-json', 'cache-control': 'no-cache' },
+      cache: 'no-store'
     });
-    if (!response.ok) return [];
+    if (!response.ok) return { records: [], ttl: null, ok: false };
     const data = await response.json();
-    return (data.Answer || [])
-      .filter((answer) => String(answer.type) !== '5')
-      .map((answer) => formatDnsAnswer(type, answer))
-      .filter(Boolean);
+    const answers = (data.Answer || []).filter((answer) => Number(answer.type) === DNS_TYPES[type]);
+    const ttls = answers.map((answer) => Number(answer.TTL)).filter((ttl) => Number.isFinite(ttl) && ttl >= 0);
+    return {
+      records: [...new Set(answers.map((answer) => formatDnsAnswer(type, answer)).filter(Boolean))],
+      ttl: ttls.length ? Math.min(...ttls) : null,
+      ok: Number(data.Status) === 0
+    };
   } catch {
-    return [];
+    return { records: [], ttl: null, ok: false };
   }
 }
 
 async function getDns(domain) {
-  const [a, aaaa, mx, ns] = await Promise.all([
-    dnsQuery(domain, 'A'),
-    dnsQuery(domain, 'AAAA'),
-    dnsQuery(domain, 'MX'),
-    dnsQuery(domain, 'NS')
-  ]);
-  return { A: a, AAAA: aaaa, MX: mx, NS: ns };
+  const types = Object.keys(DNS_TYPES);
+  const results = await Promise.all(types.map((type) => dnsQuery(domain, type)));
+  return {
+    records: Object.fromEntries(types.map((type, index) => [type, results[index].records])),
+    ns: results[types.indexOf('NS')]
+  };
 }
 
 async function googleRegionalDns(domain, type, subnet) {
@@ -181,14 +186,14 @@ async function googleRegionalDns(domain, type, subnet) {
 
     const response = await fetch(url.toString(), {
       headers: { 'accept': 'application/dns-json, application/json' },
-      cf: { cacheTtl: 120, cacheEverything: true }
+      cache: 'no-store'
     });
     if (!response.ok) return { ok: false, status: null, answers: [], ttl: null };
 
     const data = await response.json();
     const answers = (data.Answer || []).map((answer) => ({
       type: Number(answer.type),
-      ttl: Number(answer.TTL) || null,
+      ttl: Number.isFinite(Number(answer.TTL)) && Number(answer.TTL) >= 0 ? Number(answer.TTL) : null,
       data: String(answer.data || '').replace(/\.$/, '')
     }));
 
@@ -239,10 +244,11 @@ async function queryRdap(domain, base) {
   const response = await fetch(url, {
     headers: {
       'accept': 'application/rdap+json, application/json;q=0.9',
+      'cache-control': 'no-cache',
       'user-agent': 'WUMETAX-Domain-Lookup/1.0 (+https://wumetax.com/)'
     },
     redirect: 'follow',
-    cf: { cacheTtl: CACHE_SECONDS, cacheEverything: true }
+    cache: 'no-store'
   });
   if (response.status === 404) return { found: false, raw: null, url, status: 404 };
   const text = await response.text();
@@ -259,11 +265,6 @@ export async function onRequestGet(context) {
   if (!validDomain(domain)) {
     return json({ registered: null, domain, message: '請輸入有效的完整網域，例如 wumetax.com。' }, 400);
   }
-
-  const cache = caches.default;
-  const cacheKey = new Request(`${requestUrl.origin}/api/domain?domain=${encodeURIComponent(domain)}`, { method: 'GET' });
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
 
   try {
     const base = await getRdapBase(domain);
@@ -296,9 +297,7 @@ export async function onRequestGet(context) {
         propagation: [],
         raw: { status: 404, note: 'Authoritative RDAP returned 404.' }
       };
-      const response = json(payload);
-      context.waitUntil(cache.put(cacheKey, response.clone()));
-      return response;
+      return json(payload);
     }
 
     if (result.found !== true || !result.raw) {
@@ -314,15 +313,28 @@ export async function onRequestGet(context) {
     }
 
     const raw = result.raw;
-    const nameservers = (raw.nameservers || [])
+    const rdapNameservers = (raw.nameservers || [])
       .map((item) => item.ldhName || item.unicodeName)
       .filter(Boolean)
       .map((name) => name.replace(/\.$/, '').toLowerCase());
-    const [dns, propagation] = await Promise.all([
+    const [dnsResult, propagation] = await Promise.all([
       getDns(domain),
       getPropagation(domain)
     ]);
+    const dns = dnsResult.records;
+    // DNS and RDAP have different update schedules. Never silently label a
+    // registry fallback as a live DNS result.
+    const nameservers = dns.NS.length ? dns.NS.map((ns) => ns.toLowerCase()) : rdapNameservers;
+    const nameserverSource = dns.NS.length ? 'dns' : 'rdap';
+    const nameserverMismatch = dns.NS.length > 0 && rdapNameservers.length > 0 &&
+      JSON.stringify([...new Set(nameservers)].sort()) !== JSON.stringify([...new Set(rdapNameservers)].sort());
     const payload = {
+      checkedAt: new Date().toISOString(),
+      nameserverSource,
+      nameserverTtl: nameserverSource === 'dns' ? dnsResult.ns.ttl : null,
+      nameserverDnsOk: dnsResult.ns.ok,
+      nameserverMismatch,
+      rdapNameservers,
       registered: true,
       domain: raw.ldhName?.toLowerCase() || domain,
       unicodeName: raw.unicodeName || null,
@@ -343,9 +355,7 @@ export async function onRequestGet(context) {
       raw
     };
 
-    const response = json(payload);
-    context.waitUntil(cache.put(cacheKey, response.clone()));
-    return response;
+    return json(payload);
   } catch (error) {
     return json({
       registered: null,

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <meta name="theme-color" content="#0052FF" />
+  <meta name="theme-color" content="#0f172a" />
   <title>網域 WHOIS / RDAP 查詢｜WUMETAX</title>
   <meta name="description" content="免費查詢網域註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。" />
   <meta property="og:title" content="網域 WHOIS / RDAP 查詢｜WUMETAX" />
@@ -13,7 +13,7 @@
   <link rel="icon" href="/assets/images/wumetax-logo.webp" type="image/webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/css/styles.css" />
 </head>
 <body>
@@ -36,9 +36,10 @@
   </header>
 
   <main>
+    <div class="hero-atmosphere">
     <section class="hero shell reveal is-visible">
       <div class="hero-copy"><div class="eyebrow"><span class="pulse"></span> WUMETAX LAB / DOMAIN INTELLIGENCE</div>
-      <p class="display-title" lang="en">Every domain.<br><span class="gradient-text">A clear picture.</span></p><h1>網域資訊，一次查清楚。</h1>
+      <p class="display-title" lang="en">Every domain.<br><span class="gradient-text">A clearer perspective.</span></p><h1>網域資訊，一次查清楚。</h1>
       <p class="hero-lead">輸入網域即可查詢註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。</p>
 
       <form id="lookupForm" class="lookup-card" novalidate>
@@ -68,9 +69,10 @@
         <button class="quick-chip" type="button" data-domain="cloudflare.com">cloudflare.com</button>
       </div>
       </div>
-      <div class="hero-visual" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><div class="visual-cross cross-a">+</div><div class="visual-cross cross-b">+</div><div class="domain-globe"><div class="globe-line"></div><div class="globe-line globe-equator"></div><span>www.</span></div><div class="float-card float-top"><span class="visual-icon">↗</span><div><small>REGISTRATION DATA</small><strong>Know your domain.</strong></div><span class="visual-check">✓</span></div><div class="float-card float-bottom"><span class="mini-label">REGIONAL DNS / 04</span><strong>跨越區域，看見解析</strong><div class="region-tags"><span>TW</span><span>US</span><span>JP</span><span>SG</span></div></div><span class="visual-caption">RDAP + DNS · 資料視覺示意</span></div>
+      <div class="hero-visual" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><div class="visual-cross cross-a">+</div><div class="visual-cross cross-b">+</div><div class="domain-globe"><div class="globe-line"></div><div class="globe-line globe-equator"></div><span>www.</span></div><div class="float-card float-top"><span class="visual-icon">↗</span><div><small>REGISTRATION DATA</small><strong>Clarity starts here.</strong></div><span class="visual-check">✓</span></div><div class="float-card float-bottom"><span class="mini-label">REGIONAL DNS / 04</span><strong>跨越區域，看見解析</strong><div class="region-tags"><span>TW</span><span>US</span><span>JP</span><span>SG</span></div></div><span class="visual-caption">RDAP + DNS · 資料視覺示意</span></div>
     </section>
 
+    </div>
     <section class="capability-band" aria-label="查詢功能"><div class="shell capability-inner"><div><span>01 / REGISTRY</span><strong>註冊資訊</strong><small>權威 RDAP 資料來源</small></div><div><span>02 / RECORDS</span><strong>DNS 記錄</strong><small>A · AAAA · MX · NS</small></div><div><span>03 / REGIONS</span><strong>四區解析</strong><small>台灣 · 美國 · 日本 · 新加坡</small></div><div><span>04 / WORKFLOW</span><strong>一鍵分享</strong><small>複製網址，隨時重新查詢</small></div></div></section>
 
     <section id="messageSection" class="shell message-section" hidden aria-live="polite"></section>
@@ -82,6 +84,7 @@
           <h2 id="resultDomain">—</h2>
         </div>
         <div class="result-actions">
+          <button id="refreshResult" class="ghost-button" type="button">重新查詢</button>
           <button id="copyDomain" class="ghost-button" type="button">複製網域</button>
           <button id="shareResult" class="ghost-button ghost-button-accent" type="button">複製查詢網址</button>
         </div>
@@ -110,10 +113,13 @@
         <div class="detail-grid">
           <article class="detail-card">
             <div class="card-heading">
-              <div><span class="section-kicker">NAMESERVER</span><h3>網域名稱伺服器</h3></div>
+              <div><span class="section-kicker">NAMESERVER</span><h3>網域名稱伺服器</h3><p id="nameserverSource">DNS NS 解析結果</p></div>
               <button id="copyNs" class="mini-button" type="button">全部複製</button>
             </div>
             <div id="nameserverList" class="list-stack"></div>
+            <p id="nameserverFreshness" class="data-note"></p>
+            <p id="nameserverDifference" class="data-notice" hidden></p>
+            <details class="registry-ns"><summary>比對 RDAP 註冊名稱伺服器</summary><div id="rdapNameserverList" class="list-stack"></div></details>
           </article>
 
           <article class="detail-card">
