@@ -62,11 +62,11 @@ RDAP 回傳 404 時，本工具會顯示「目前查無註冊紀錄」，而不�
 
 網域查詢每次都會連線上游。正式公開後若流量增加，建議再於 Cloudflare 對 `/api/domain*` 加上 Rate Limiting / WAF 規則；若遭機器人大量查詢，再加入 Turnstile。
 
-## Modern Atmospheric 介面與驗證
+## WUMETAX Lab 統一平面介面與驗證
 
 前台沿用原生 HTML / CSS / JavaScript；沒有 React 或 Framer Motion，所有動態效果使用 CSS，並尊重 `prefers-reduced-motion`。保留原始 WUMETAX Logo 與 `_routes.json` 路由，不含 PDF 功能。Pages Function 仍提供原有 API，並改進資料新鮮度與來源標示。
 
-設計 token 集中在 `assets/css/styles.css` 的 `:root`：`#0f172a` 深色 Hero、`#f8f9fa` 資料區、`#6366f1` 靛色，以及 Lora / Inter / Space Grotesk 字體。Google Fonts 無法載入時會使用系統備援字體。Hero 右側為裝飾示意，不會顯示虛構的即時查詢數據；四區結果仍由 Google Public DNS + EDNS Client Subnet 模擬。
+設計 token 集中在 `assets/css/styles.css` 的 `:root`：與 https://digital-clock-online.wumetax.com/ 統一：`#111827` 頁首頁尾、`#3B82F6` Hero、白色資料區、`#10B981` 狀態色、`#F59E0B` 強調色，以及 Outfit / Noto Sans TC 字體。所有卡片採小圓角、無陰影、無模糊的平面格式。Google Fonts 無法載入時會使用系統備援字體。Hero 使用寬版深色查詢面板，保留原始 WUMETAX Logo；四區結果仍由 Google Public DNS + EDNS Client Subnet 模擬。
 
 開發工具僅用於測試，不會加入前台載入資源。Node.js 22+：
 
@@ -92,3 +92,5 @@ Pages 仍使用 Git integration、Framework None、根目錄輸出與空白 Buil
 - DNS 未取得 NS 時會以 RDAP 備援，介面明確標示，複製功能使用畫面上的同一組名稱伺服器。
 - 重新查詢能避開本站 HTTP 快取，無法強迫外部遞迴 DNS 解析器清除 TTL 內的快取，也不能強迫 Registry 即時發布更新。介面顯示查詢時間與 DNS 回覆 TTL，避免把查詢時間誤認成全球生效時間。
 - 測試涵蓋舊 RDAP / 新 DNS 的差異、重新連線上游、NS 複製更新、備援、記錄類型過濾與 TTL=0。
+
+測試時可透過 `PORT` 設定本機網站埠號，並以 `TEST_URL` 指向對應測試網址，避免與其他工具站衝突。

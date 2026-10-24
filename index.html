@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#111827" />
   <title>網域 WHOIS / RDAP 查詢｜WUMETAX</title>
   <meta name="description" content="免費查詢網域註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。" />
   <meta property="og:title" content="網域 WHOIS / RDAP 查詢｜WUMETAX" />
@@ -13,7 +13,7 @@
   <link rel="icon" href="/assets/images/wumetax-logo.webp" type="image/webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/css/styles.css" />
 </head>
 <body>
@@ -24,11 +24,12 @@
       <a class="brand" href="https://wumetax.com/" target="_blank" rel="noopener" aria-label="WUMETAX 官方網站">
         <img class="brand-logo" src="/assets/images/wumetax-logo.webp" alt="WUMETAX Logo" />
         <span class="brand-copy">
-          <strong>WUMETAX</strong>
-          <small>WEBSITE SOLUTIONS</small>
+          <strong>WUMETAX DOMAIN <span class="lab-badge">LAB</span></strong>
+          <small>網域與 DNS 查詢工作站</small>
         </span>
       </a>
       <nav class="header-actions" aria-label="主要導覽">
+        <a class="text-link" href="#lookup">網域查詢</a><a class="text-link" href="#history">查詢紀錄</a><a class="text-link" href="https://digital-clock-online.wumetax.com/">時間工作站 ↗</a>
         <a class="text-link" href="https://wumetax.com/" target="_blank" rel="noopener">返回官網</a>
         <a class="button button-small" href="https://wumetax.com/contact/" target="_blank" rel="noopener">網站需求諮詢</a>
       </nav>
@@ -37,9 +38,9 @@
 
   <main>
     <div class="hero-atmosphere">
-    <section class="hero shell reveal is-visible">
-      <div class="hero-copy"><div class="eyebrow"><span class="pulse"></span> WUMETAX LAB / DOMAIN INTELLIGENCE</div>
-      <p class="display-title" lang="en">Every domain.<br><span class="gradient-text">A clearer perspective.</span></p><h1>網域資訊，一次查清楚。</h1>
+    <section id="lookup" class="hero shell reveal is-visible">
+      <div class="hero-copy"><div class="hero-topline"><div class="eyebrow"><span class="pulse"></span> WUMETAX LAB // DOMAIN LOOKUP</div><span class="hero-tag">RDAP + DNS</span></div>
+      <p class="display-title" lang="en">DOMAIN LOOKUP</p><h1>網域資訊，一次查清楚。</h1>
       <p class="hero-lead">輸入網域即可查詢註冊狀態、註冊商、建立與到期日期、Nameserver、DNSSEC 與常用 DNS 記錄。</p>
 
       <form id="lookupForm" class="lookup-card" novalidate>
@@ -69,7 +70,6 @@
         <button class="quick-chip" type="button" data-domain="cloudflare.com">cloudflare.com</button>
       </div>
       </div>
-      <div class="hero-visual" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><div class="visual-cross cross-a">+</div><div class="visual-cross cross-b">+</div><div class="domain-globe"><div class="globe-line"></div><div class="globe-line globe-equator"></div><span>www.</span></div><div class="float-card float-top"><span class="visual-icon">↗</span><div><small>REGISTRATION DATA</small><strong>Clarity starts here.</strong></div><span class="visual-check">✓</span></div><div class="float-card float-bottom"><span class="mini-label">REGIONAL DNS / 04</span><strong>跨越區域，看見解析</strong><div class="region-tags"><span>TW</span><span>US</span><span>JP</span><span>SG</span></div></div><span class="visual-caption">RDAP + DNS · 資料視覺示意</span></div>
     </section>
 
     </div>
@@ -162,7 +162,7 @@
       </details>
     </section>
 
-    <section class="shell history-section reveal">
+    <section id="history" class="shell history-section reveal">
       <div class="section-title-row">
         <div><span class="section-kicker">RECENT LOOKUPS</span><h2>最近查詢</h2></div>
         <button id="clearHistory" class="text-button" type="button">清除紀錄</button>
@@ -180,10 +180,10 @@
 
   <footer class="site-footer reveal">
     <div class="shell footer-inner">
-      <div class="footer-brand"><img src="/assets/images/wumetax-logo.webp" alt="" /><div><strong>WUMETAX LTD.</strong><p>企業網站建置、電子商務、主機代管與網站維護。</p></div></div>
-      <div class="footer-links"><a href="https://wumetax.com/" target="_blank" rel="noopener">官方網站</a><a href="https://wumetax.com/contact/" target="_blank" rel="noopener">聯絡我們</a></div>
+      <div class="footer-brand"><img src="/assets/images/wumetax-logo.webp" alt="" /><div><strong>WUMETAX DOMAIN // 網域工作站</strong><p>網域註冊資訊、DNS 記錄與四區解析，一站掌握。</p><p>Developed by <b>Wu</b> · WUMETAX</p></div></div>
+      <div class="footer-links"><a class="footer-clock" href="https://digital-clock-online.wumetax.com/">時間工作站 ↗</a><a href="https://wumetax.com/" target="_blank" rel="noopener">官方網站</a><a href="https://wumetax.com/contact/" target="_blank" rel="noopener">聯絡我們</a></div>
     </div>
-    <div class="shell footer-bottom">© 2022–2026 Wumetax LTD. · Domain Lookup Tool</div>
+    <div class="shell footer-bottom">© 2022–2026 Wumetax LTD. · Domain Lookup Tool · <a href="#lookup">回到頂部 ↑</a></div>
   </footer>
   <script src="/assets/js/app.js" defer></script>
 </body>

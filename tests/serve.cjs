@@ -8,4 +8,4 @@ http.createServer((req,res)=>{
  if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}
  fs.readFile(file,(err,data)=>{if(err){res.writeHead(404).end();return;}
  res.setHeader('content-type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.webp')?'image/webp':'text/html');res.end(data);});
-}).listen(4173,'127.0.0.1');
+}).listen(Number(process.env.PORT || 4173),'127.0.0.1');
